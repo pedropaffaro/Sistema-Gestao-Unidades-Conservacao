@@ -29,10 +29,43 @@ CREATE TABLE zona (
         CHECK (UPPER(tipo) IN ('PRESERVACAO','USO SUSTENTAVEL'))
 );
 
+CREATE TABLE comunidade_tradicional (
+    unidade_conservacao char(12)        NOT NULL,
+    nro_zona            smallint        NOT NULL,
+    nome                varchar(100)    NOT NULL,
+    tamanho             smallint,
+    tipo_comunidade     varchar(100),
+
+    CONSTRAINT pk_comunidade_tradicional
+        PRIMARY KEY (unidade_conservacao, nro_zona, nome),
+
+    CONSTRAINT fk_comunidade_tradicional_zona
+        FOREIGN KEY (unidade_conservacao, nro_zona) REFERENCES zona (unidade_conservacao, nro_zona)
+        ON DELETE RESTRICT,
+
+    -- CONSTRAINT ck_comunidade_tradicional_tipo 
+    --    CHECK (UPPER(tipo_comunidade) IN (''))
+);
+
+CREATE TABLE comunidade_costume (
+    unidade_conservacao char(12)        NOT NULL,
+    nro_zona            smallint        NOT NULL,
+    nome_comunidade     varchar(100)    NOT NULL,
+    costume             varchar(255)    NOT NULL,
+
+    CONSTRAINT pk_comunidade_costume
+        PRIMARY KEY (unidade_conservacao, nro_zona, nome_comunidade, costume),
+
+    CONSTRAINT fk_comunidade_costume_comunidade_tradicional
+        FOREIGN KEY (unidade_conservacao, nro_zona, nome_comunidade) REFERENCES comunidade_tradicional (unidade_conservacao, nro_zona, nome)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
 CREATE TABLE funcionario (
     nro_funcional       smallint        NOT NULL,
     cpf                 char(11)        NOT NULL,
-    nome                varchar(50),
+    nome                varchar(70),
     data_contratacao    date,
     telefone            char(11),
     email               varchar(100),
@@ -62,6 +95,62 @@ CREATE TABLE funcionario_categoria (
 
     CONSTRAINT fk_funcionario_categoria_funcionario
         FOREIGN KEY (funcionario) REFERENCES funcionario (nro_funcional)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE visitante (
+    cpf         char(11) NOT NULL,
+    nome        varchar(70),
+    telefone    char(11),
+    email       varchar(100),
+
+    CONSTRAINT pk_visitante
+        PRIMARY KEY (cpf)
+);
+
+CREATE TABLE visita (
+    cod_visita          integer     NOT NULL GENERATED ALWAYS AS IDENTITY,
+    unidade_conservacao char(12)    NOT NULL,
+    nro_zona            smallint    NOT NULL,
+    nro_visita          integer     NOT NULL,
+    data_hora           timestamp,
+    tipo                varchar(15),
+    nro_visitantes      smallint,
+    guia                smallint,
+
+    CONSTRAINT pk_visita
+        PRIMARY KEY (cod_visita),
+    
+    CONSTRAINT uc_visita
+        UNIQUE (unidade_conservacao, nro_zona, nro_visita),
+
+    CONSTRAINT fk_visita_zona
+        FOREIGN KEY (unidade_conservacao, nro_zona) REFERENCES zona (unidade_conservacao, nro_zona)
+        ON DELETE CASCADE,
+    
+    CONSTRAINT fk_visita_guia
+        FOREIGN KEY (guia) REFERENCES funcionario (nro_funcional)
+        ON DELETE SET NULL,
+
+    CONSTRAINT ck_visita_tipo
+        CHECK (UPPER(tipo) IN ('EDUCATIVA', 'CIENTIFICA', 'TURISTICA'))
+
+    -- Talvez fazer um trigger para incrementar automaticamente nro_visitantes 
+);
+
+CREATE TABLE visita_visitante (
+    visita      integer     NOT NULL,
+    visitante   char(11)    NOT NULL,
+
+    CONSTRAINT pk_visita_visitante
+        PRIMARY KEY (visita, visitante),
+
+    CONSTRAINT fk_visita_visitante_visita
+        FOREIGN KEY (visita) REFERENCES visita (cod_visita)
+        ON DELETE CASCADE,
+    
+    CONSTRAINT fk_visita_visitante_visitante
+        FOREIGN KEY (visitante) REFERENCES visitante (cpf)
         ON DELETE CASCADE
 );
 
@@ -164,6 +253,26 @@ CREATE TABLE pesquisa_especie (
         ON UPDATE CASCADE
 );
 
+CREATE TABLE pesquisa_comunidade_tradicional (
+    unidade_conservacao char(12)        NOT NULL,
+    nro_zona            smallint        NOT NULL,
+    nome_comunidade     varchar(100)    NOT NULL,
+    pesquisa            varchar(255)    NOT NULL,
+
+    CONSTRAINT pk_pesquisa_comunidade_tradicional
+        PRIMARY KEY (unidade_conservacao, nro_zona, nome_comunidade, pesquisa),
+
+    CONSTRAINT fk_pesquisa_comunidade_tradicional_comunidade_tradicional
+        FOREIGN KEY (unidade_conservacao, nro_zona, nome_comunidade) REFERENCES comunidade_tradicional (unidade_conservacao, nro_zona, nome)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_pesquisa_comunidade_tradicional_pesquisa
+        FOREIGN KEY (pesquisa) REFERENCES pesquisa (titulo)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
 CREATE TABLE ser_vivo (
     chip        integer         NOT NULL,
     apelido     varchar(100),
@@ -183,7 +292,7 @@ CREATE TABLE observacao (
     biologo             smallint        NOT NULL,
     ser_vivo            integer         NOT NULL,
     data_hora           timestamp       NOT NULL,
-    metodo              varchar(255),
+    metodo              varchar(18),
     descricao           text,
     unidade_conservacao char(12)        NOT NULL,
     nro_zona            smallint        NOT NULL,
@@ -201,7 +310,38 @@ CREATE TABLE observacao (
 
     CONSTRAINT fk_observacao_zona
         FOREIGN KEY (unidade_conservacao, nro_zona) REFERENCES zona (unidade_conservacao, nro_zona)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT ck_observacao_metodo
+        CHECK (UPPER(metodo) IN ('CAMERA', 'VISUAL', 'BINOCULO', 'GRAVACAO DE AUDIO', 'SINAIS BIOLOGICOS'))
 
     -- Talvez fazer um trigger para verificar que o funcionário é do tipo 'BIOLOGO'
+);
+
+CREATE TABLE ocorrencia (
+    unidade_conservacao char(12)    NOT NULL,
+    nro_zona            smallint    NOT NULL,
+    data_horario        timestamp   NOT NULL,
+    fiscal              smallint    NOT NULL,
+    tipo_ocorrencia     varchar(25),
+    nivel_gravidade     varchar(11),
+    area_afetada        numeric(10, 2),
+    descricao           text,
+
+    CONSTRAINT pk_ocorrencia
+        PRIMARY KEY (unidade_conservacao, nro_zona, data_horario),
+
+    CONSTRAINT fk_ocorrencia_zona
+        FOREIGN KEY (unidade_conservacao, nro_zona) REFERENCES zona (unidade_conservacao, nro_zona)
+        ON DELETE CASCADE,
+    
+    CONSTRAINT fk_ocorrencia_fiscal
+        FOREIGN KEY (fiscal) REFERENCES funcionario (nro_funcional)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT ck_ocorrencia_tipo
+        CHECK (UPPER(tipo_ocorrencia) IN ('DESMATAMENTO', 'GARIMPO', 'CACA', 'INCENDIO CRIMINOSO', 'INCENDIO NATURAL', 'DESLIZAMENTO DE ENCOSTA', 'OCUPACAO IRREGULAR',  'TRAFICO BIOLOGICO', 'INVASAO DE ZONA')),
+
+    CONSTRAINT ck_ocorrencia_nivel_gravidade
+        CHECK (UPPER(nivel_gravidade) IN ('BAIXISSIMO', 'BAIXO', 'MEDIO', 'ALTO', 'ALTISSIMO'))
 );
