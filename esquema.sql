@@ -1,11 +1,12 @@
 CREATE TABLE unidade_conservacao (
     cnuc            char(12) NOT NULL,
     nome            varchar(100),
-    data_criacao    date,
-    bioma           varchar(30),
+    data_criacao    date DEFAULT CURRENT_DATE,
+    bioma           varchar(30) ,
     endereco        varchar(255),
     orgao_gestor    varchar(100),
-    area_total      numeric(10, 2), -- Talvez criar um trigger para fazer o calculo automático
+    area_total      numeric(10, 2) DEFAULT 0.00 NOT NULL, 
+    -- TODO: criar um trigger para fazer o calculo automático
 
     CONSTRAINT pk_unidade_conservacao 
         PRIMARY KEY (cnuc)
@@ -27,6 +28,10 @@ CREATE TABLE zona (
 
     CONSTRAINT ck_zona_tipo 
         CHECK (UPPER(tipo) IN ('PRESERVACAO','USO SUSTENTAVEL'))
+
+    CONSTRAINT ck_zona_area 
+        CHECK (area >= 0) -- A área não pode ser negativa, mas pode ser zero para zonas que ainda não foram delimitadas
+
 );
 
 CREATE TABLE comunidade_tradicional (
@@ -41,10 +46,44 @@ CREATE TABLE comunidade_tradicional (
 
     CONSTRAINT fk_comunidade_tradicional_zona
         FOREIGN KEY (unidade_conservacao, nro_zona) REFERENCES zona (unidade_conservacao, nro_zona)
-        ON DELETE RESTRICT -- Adicionar um trigger para verificar se a unidade de conservação é do tipo 'USO SUSTENTAVEL'
-    
-    -- CONSTRAINT ck_comunidade_tradicional_tipo 
-    --    CHECK (UPPER(tipo_comunidade) IN (''))
+        ON DELETE RESTRICT,
+
+    CONSTRAINT ck_comunidade_tradicional_tamanho
+        CHECK (tamanho IS NULL OR tamanho > 0),
+
+    -- Esses dados estão condizentes com a lista de comunidades tradicionais do Ministério do Meio Ambiente:
+    -- https://www.gov.br/mma/pt-br/assuntos/povos-e-comunidades-tradicionais
+    CONSTRAINT ck_comunidade_tradicional_tipo 
+        CHECK (UPPER(tipo_comunidade) IN (
+            'ANDIROBEIROS',
+            'APANHADORES DE FLORES SEMPRE-VIVAS',
+            'BENZENDEIROS',
+            'CABOCLOS',
+            'CAIÇARAS',
+            'CATADORES DE MANGABA',
+            'CATINGUEIROS',
+            'CIPOZEIROS',
+            'FUNDO E FECHO DE PASTO',
+            'QUILOMBOLAS',
+            'EXTRATIVISTAS',
+            'EXTRATIVISTAS COSTEIROS E MARINHOS',
+            'FAXINALENSES',
+            'GERAISZEIROS',
+            'ILHÉUS',
+            'MORROQUIANOS',
+            'PANTANEIROS',
+            'PESCADORES ARTESANAIS',
+            'POVO POMERANO',
+            'POVOS CIGANOS',
+            'COMUNIDADES DE TERREIRO/POVOS E COMUNIDADES DE MATRIZ AFRICANA',
+            'POVOS INDÍGENAS',
+            'QUEBRADEIRAS DE COCO BABAÇU',
+            'RAIZEIROS',
+            'RETIREIROS DO ARAGUAIA',
+            'RIBEIRINHOS',
+            'VAZANTEIROS',
+            'VEREDEIROS'
+        ))
 );
 
 CREATE TABLE comunidade_costume (
@@ -83,7 +122,10 @@ CREATE TABLE funcionario (
         ON DELETE RESTRICT, -- Impede que a unidade seja apagada se houver funcionários
 
     CONSTRAINT ck_funcionario_salario
-        CHECK (salario > 0)
+        CHECK (salario >= 0), -- O salário não pode ser negativo, mas pode ser zero para voluntários
+    
+    CONSTRAINT ck_email_funcionario
+        CHECK (email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$') -- Verifica se o email está em um formato válido
 );
 
 CREATE TABLE funcionario_categoria (
@@ -105,7 +147,10 @@ CREATE TABLE visitante (
     email       varchar(100),
 
     CONSTRAINT pk_visitante
-        PRIMARY KEY (cpf)
+        PRIMARY KEY (cpf),
+
+    CONSTRAINT ck_email_visitante
+        CHECK (email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$') -- Verifica se o email está em um formato válido
 );
 
 CREATE TABLE visita (
@@ -113,9 +158,9 @@ CREATE TABLE visita (
     unidade_conservacao char(12)    NOT NULL,
     nro_zona            smallint    NOT NULL,
     nro_visita          integer     NOT NULL,
-    data_hora           timestamp,
-    tipo                varchar(15),
-    nro_visitantes      smallint,
+    data_hora           timestamp   DEFAULT CURRENT_TIMESTAMP,
+    tipo                varchar(15) DEFAULT 'TURISTICA',
+    nro_visitantes      smallint    DEFAULT 0,
     guia                smallint,
 
     CONSTRAINT pk_visita
@@ -136,9 +181,12 @@ CREATE TABLE visita (
         CHECK (nro_visitantes >= 0);
 
     CONSTRAINT ck_visita_tipo
-        CHECK (UPPER(tipo) IN ('EDUCATIVA', 'CIENTIFICA', 'TURISTICA'))
+        CHECK (UPPER(tipo) IN ('EDUCATIVA', 'CIENTIFICA', 'TURISTICA')),
 
-    -- Talvez fazer um trigger para incrementar automaticamente nro_visitantes 
+    CONSTRAINT ck_visita_nro_visitantes
+        CHECK (nro_visitantes >= 0)
+
+    -- TODO: trigger para incrementar automaticamente nro_visitantes 
     -- O guia deve trabalhar na UC onde ocorre a visita
 );
 
@@ -173,7 +221,14 @@ CREATE TABLE especie (
         PRIMARY KEY (nome_cientifico),
     
     CONSTRAINT ck_especie_status_conservacao
-        CHECK (UPPER(status_conservacao) IN ('DD', 'LC', 'NT', 'VU', 'EN', 'CR', 'EW', 'EX', 'NE')) -- Valores baseados na lista da IUCN
+        -- Valores baseados na lista da IUCN https://oeco.org.br/dicionario-ambiental/27904-entenda-a-classificacao-da-lista-vermelha-da-iucn/
+        CHECK (UPPER(status_conservacao) IN ('DD', 'LC', 'NT', 'VU', 'EN', 'CR', 'EW', 'EX', 'NE')),
+
+    CONSTRAINT ck_especie_nome_cientifico
+        CHECK (nome_cientifico ~ '^[A-Z][a-z]+ [a-z]+$'), -- Verifica se o nome científico está no formato "Genus species"
+
+    CONSTRAINT ck_reino_especie
+        CHECK (UPPER(reino) IN ('ANIMALIA', 'PLANTAE', 'FUNGI', 'PROTISTA', 'MONERA')) -- Verifica se o reino está em um dos 5 reinos tradicionais da biologia
 );
 
 CREATE TABLE unidade_conservacao_especie (
@@ -195,7 +250,7 @@ CREATE TABLE unidade_conservacao_especie (
 
 CREATE TABLE pesquisa (
     titulo              varchar(255) NOT NULL,
-    data_inicio         date,
+    data_inicio         date NOT NULL DEFAULT CURRENT_DATE,
     data_termino        date,
     objetivo            text,
     inst_responsavel    varchar(255),
@@ -234,9 +289,9 @@ CREATE TABLE pesquisa_pesquisador (
     
     CONSTRAINT fk_pesquisa_pesquisador_pesquisador
         FOREIGN KEY (pesquisador) REFERENCES funcionario (nro_funcional)
-        ON DELETE RESTRICT 
+        ON DELETE RESTRICT,
 
-    -- Talvez fazer um trigger para verificar que o funcionário é do tipo 'PESQUISADOR'
+    -- TODO: trigger para verificar que o funcionário é do tipo 'PESQUISADOR'
 );
 
 CREATE TABLE pesquisa_especie (
@@ -280,7 +335,7 @@ CREATE TABLE pesquisa_comunidade_tradicional (
 CREATE TABLE ser_vivo (
     chip        integer         NOT NULL,
     apelido     varchar(100),
-    situacao    varchar(20),
+    situacao    varchar(20)     NOT NULL DEFAULT 'VIVO',
     especie     varchar(255)    NOT NULL,
 
     CONSTRAINT pk_ser_vivo 
@@ -289,7 +344,11 @@ CREATE TABLE ser_vivo (
     CONSTRAINT fk_ser_vivo_especie 
         FOREIGN KEY (especie) REFERENCES especie (nome_cientifico)
         ON DELETE RESTRICT -- Bloqueia a remoção de uma espécie se existir um ser vivo associado a espécie
-        ON UPDATE CASCADE -- Como o nome científico pode ser atualizado, é válido colocar o ON UPDATE CASCADE aqui
+        ON UPDATE CASCADE, -- Como o nome científico pode ser atualizado, é válido colocar o ON UPDATE CASCADE aqui
+
+    -- TODO: Verificar se isso é necessário tendo em vista que não havia anteriormente
+    CONSTRAINT ck_ser_vivo_situacao
+        CHECK (UPPER(situacao) IN ('VIVO', 'MORTO', 'CAPTURADO','DESAPARECIDO', 'EM REABILITACAO', 'LIBERADO'))
 );
 
 CREATE TABLE observacao (
@@ -317,9 +376,12 @@ CREATE TABLE observacao (
         ON DELETE CASCADE,
 
     CONSTRAINT ck_observacao_metodo
-        CHECK (UPPER(metodo) IN ('CAMERA', 'VISUAL', 'BINOCULO', 'GRAVACAO DE AUDIO', 'SINAIS BIOLOGICOS'))
+        CHECK (UPPER(metodo) IN ('CAMERA', 'VISUAL', 'BINOCULO', 'GRAVACAO DE AUDIO', 'SINAIS BIOLOGICOS')),
 
-    -- Talvez fazer um trigger para verificar que o funcionário é do tipo 'BIOLOGO'
+    CONSTRAINT ck_observacao_data_hora
+        CHECK (data_hora <= CURRENT_TIMESTAMP)
+
+    -- TODO: fazer um trigger para verificar que o funcionário é do tipo 'BIOLOGO'
 );
 
 CREATE TABLE ocorrencia (
@@ -329,11 +391,14 @@ CREATE TABLE ocorrencia (
     fiscal              smallint    NOT NULL,
     tipo_ocorrencia     varchar(25),
     nivel_gravidade     varchar(11),
-    area_afetada        numeric(10, 2),
+    area_afetada        numeric(10, 2) DEFAULT 0.00,
     descricao           text,
 
     CONSTRAINT pk_ocorrencia
-        PRIMARY KEY (unidade_conservacao, nro_zona, data_horario),
+        PRIMARY KEY (nro_registro),
+
+    CONSTRAINT uc_ocorrencia
+        UNIQUE (unidade_conservacao, nro_zona, data_horario),
 
     CONSTRAINT fk_ocorrencia_zona
         FOREIGN KEY (unidade_conservacao, nro_zona) REFERENCES zona (unidade_conservacao, nro_zona)
@@ -347,5 +412,10 @@ CREATE TABLE ocorrencia (
         CHECK (UPPER(tipo_ocorrencia) IN ('DESMATAMENTO', 'GARIMPO', 'CACA', 'INCENDIO CRIMINOSO', 'INCENDIO NATURAL', 'DESLIZAMENTO DE ENCOSTA', 'OCUPACAO IRREGULAR',  'TRAFICO BIOLOGICO', 'INVASAO DE ZONA')),
 
     CONSTRAINT ck_ocorrencia_nivel_gravidade
-        CHECK (UPPER(nivel_gravidade) IN ('BAIXISSIMO', 'BAIXO', 'MEDIO', 'ALTO', 'ALTISSIMO'))
+        CHECK (UPPER(nivel_gravidade) IN ('BAIXISSIMO', 'BAIXO', 'MEDIO', 'ALTO', 'ALTISSIMO')),
+
+    CONSTRAINT ck_ocorrencia_area_afetada
+        CHECK (area_afetada >= 0)
+
+    -- TODO: fazer um trigger para verificar que o funcionário é do tipo 'FISCAL'
 );
