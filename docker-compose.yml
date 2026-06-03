@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:15
+    container_name: uc_postgres_db
+    restart: always
+    env_file:
+      - ./backend/.env
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./SQL/esquema.sql:/docker-entrypoint-initdb.d/init.sql
+  backend:
+    build: ./backend
+    container_name: backend
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

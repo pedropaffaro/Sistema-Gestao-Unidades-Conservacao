@@ -27,7 +27,7 @@ CREATE TABLE zona (
         ON DELETE CASCADE,
 
     CONSTRAINT ck_zona_tipo 
-        CHECK (UPPER(tipo) IN ('PRESERVACAO','USO SUSTENTAVEL'))
+        CHECK (UPPER(tipo) IN ('PRESERVACAO','USO SUSTENTAVEL')),
 
     CONSTRAINT ck_zona_area 
         CHECK (area >= 0) -- A área não pode ser negativa, mas pode ser zero para zonas que ainda não foram delimitadas
@@ -178,13 +178,10 @@ CREATE TABLE visita (
         ON DELETE SET NULL,
 
     CONSTRAINT ck_visita_nro_visitantes
-        CHECK (nro_visitantes >= 0);
+        CHECK (nro_visitantes >= 0),
 
     CONSTRAINT ck_visita_tipo
-        CHECK (UPPER(tipo) IN ('EDUCATIVA', 'CIENTIFICA', 'TURISTICA')),
-
-    CONSTRAINT ck_visita_nro_visitantes
-        CHECK (nro_visitantes >= 0)
+        CHECK (UPPER(tipo) IN ('EDUCATIVA', 'CIENTIFICA', 'TURISTICA'))
 
     -- TODO: trigger para incrementar automaticamente nro_visitantes 
     -- O guia deve trabalhar na UC onde ocorre a visita
@@ -289,7 +286,7 @@ CREATE TABLE pesquisa_pesquisador (
     
     CONSTRAINT fk_pesquisa_pesquisador_pesquisador
         FOREIGN KEY (pesquisador) REFERENCES funcionario (nro_funcional)
-        ON DELETE RESTRICT,
+        ON DELETE RESTRICT
 
     -- TODO: trigger para verificar que o funcionário é do tipo 'PESQUISADOR'
 );
@@ -385,6 +382,7 @@ CREATE TABLE observacao (
 );
 
 CREATE TABLE ocorrencia (
+    protocolo           integer     NOT NULL GENERATED ALWAYS AS IDENTITY,
     unidade_conservacao char(12)    NOT NULL,
     nro_zona            smallint    NOT NULL,
     data_horario        timestamp   NOT NULL,
@@ -395,7 +393,7 @@ CREATE TABLE ocorrencia (
     descricao           text,
 
     CONSTRAINT pk_ocorrencia
-        PRIMARY KEY (nro_registro),
+        PRIMARY KEY (protocolo),
 
     CONSTRAINT uc_ocorrencia
         UNIQUE (unidade_conservacao, nro_zona, data_horario),
