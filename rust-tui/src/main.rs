@@ -22,8 +22,6 @@ fn main() -> anyhow::Result<()> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut app = app::App::new();
-    app.fetch_units();
-
     let result = run_app(&mut terminal, &mut app);
 
     disable_raw_mode()?;

@@ -52,14 +52,17 @@ pub struct FilterParams {
     pub data_criacao: Option<String>,
 }
 
-fn extract_error(body: &str) -> String {
+fn extract_error(body: &str, use_msg: bool) -> String {
     #[derive(Deserialize)]
     struct ApiError {
-        detail: serde_json::Value,
+        msg: Option<serde_json::Value>,
+        detail: Option<serde_json::Value>,
     }
+
     serde_json::from_str::<ApiError>(body)
         .ok()
-        .map(|e| match e.detail {
+        .and_then(|e| if use_msg { e.msg } else { e.detail })
+        .map(|value| match value {
             serde_json::Value::String(s) => s,
             v => v.to_string(),
         })
@@ -101,7 +104,12 @@ pub fn list_unidades(filters: &FilterParams) -> Result<Vec<Unidade>, String> {
     if !resp.status().is_success() {
         let status = resp.status();
         let body = resp.text().unwrap_or_default();
-        return Err(format!("HTTP {status}: {}", extract_error(&body)));
+
+        if status.as_u16() == 422 {
+            return Err(extract_error(&body, true));
+        } else {
+            return Err(format!("HTTP {status}: {}", extract_error(&body, false)));
+        }
     }
 
     resp.json::<Vec<Unidade>>()
@@ -120,7 +128,12 @@ pub fn create_unidade(payload: &CreateUnidade) -> Result<Unidade, String> {
     if !resp.status().is_success() {
         let status = resp.status();
         let body = resp.text().unwrap_or_default();
-        return Err(format!("HTTP {status}: {}", extract_error(&body)));
+
+        if status.as_u16() == 422 {
+            return Err(extract_error(&body, true));
+        } else {
+            return Err(format!("HTTP {status}: {}", extract_error(&body, false)));
+        }
     }
 
     resp.json::<Unidade>()
