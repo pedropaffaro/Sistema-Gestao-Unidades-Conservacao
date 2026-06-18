@@ -36,6 +36,12 @@ bash-backend: ## Abre o terminal (bash) interativo dentro do backend
 psql: ## Acessa o banco de dados PostgreSQL via CLI usando as variáveis do .env
 	docker compose -p $(PROJECT) exec db sh -c 'psql -U $$DB_USER -d $$DB_NAME'
 
+reset: ## Além de derrubar os contêineres, remove os volumes para resetar o banco de dados
+	docker compose -p $(PROJECT) down -v
+
+ingest: ## Executa o arquivo SQL de ingestão de dados no banco em execução.
+	docker compose -p $(PROJECT) exec -T db sh -c 'psql -U $$DB_USER -d $$DB_NAME' < SQL/dados.sql
+
 logs-db: ## Mostra os logs apenas do banco de dados
 	docker compose -p $(PROJECT) logs -f db
 

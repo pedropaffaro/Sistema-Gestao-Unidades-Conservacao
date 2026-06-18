@@ -5,11 +5,14 @@ CREATE TABLE unidade_conservacao (
     bioma           varchar(30) ,
     endereco        varchar(255),
     orgao_gestor    varchar(100),
-    area_total      numeric(10, 2) DEFAULT 0.00 NOT NULL, 
+    area_total      numeric(10, 2) DEFAULT 0.00, 
     -- TODO: criar um trigger para fazer o calculo automático
 
     CONSTRAINT pk_unidade_conservacao 
-        PRIMARY KEY (cnuc)
+        PRIMARY KEY (cnuc),
+
+    CONSTRAINT ck_area_total 
+        CHECK (area_total >= 0)
 );
 
 CREATE TABLE zona (
@@ -30,7 +33,7 @@ CREATE TABLE zona (
         CHECK (UPPER(tipo) IN ('PRESERVACAO','USO SUSTENTAVEL')),
 
     CONSTRAINT ck_zona_area 
-        CHECK (area >= 0) -- A área não pode ser negativa, mas pode ser zero para zonas que ainda não foram delimitadas
+        CHECK (area >= 0)
 
 );
 

@@ -53,16 +53,21 @@ async def criar_unidade(
     summary="Consultar unidades com filtros",
 )
 async def listar_unidades(
+    cnuc: Optional[str] = Query(None, description="Busca exata pelo CNUC"),
     nome: Optional[str] = Query(None, description="Busca parcial no nome"),
     bioma: Optional[str] = Query(None, description="Busca parcial no bioma"),
     orgao_gestor: Optional[str] = Query(None, description="Busca parcial no órgão gestor"),
-    data_criacao: Optional[date] = Query(None, description="Data exata de criação (YYYY-MM-DD)"),
+    data_criacao: Optional[date] = Query(None, description="Data exata de criação (DD-MM-YYYY)"),
     pool: asyncpg.Pool = Depends(get_env_pool),
 ):
     conditions = []
     params = []
     i = 1
 
+    if cnuc:
+        conditions.append(f"cnuc = ${i}")
+        params.append(cnuc)
+        i += 1
     if nome:
         conditions.append(f"nome ILIKE ${i}")
         params.append(f"%{nome}%")
@@ -98,3 +103,70 @@ async def listar_unidades(
         )
 
     return [dict(r) for r in rows]
+
+@router.delete(
+    "/{cnuc}",
+    response_model=UnidadeResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Deletar unidade de conservação por CNUC",
+)
+async def deletar_unidade(
+    cnuc: str,
+    pool: asyncpg.Pool = Depends(get_env_pool),
+):
+    sql = "DELETE FROM unidade_conservacao WHERE cnuc = $1 RETURNING *"
+    try:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(sql, cnuc)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao deletar unidade: {str(e)}",
+        )
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unidade de conservação com cnuc '{cnuc}' não encontrada.",
+        )
+    return dict(row)
+
+@router.put(
+    "/{cnuc}",
+    response_model=UnidadeResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Atualizar unidade de conservação por CNUC",
+)
+async def atualizar_unidade(
+    cnuc: str,
+    payload: UnidadeCreate,
+    pool: asyncpg.Pool = Depends(get_env_pool),
+):
+    sql = """
+        UPDATE unidade_conservacao
+        SET nome = $1, data_criacao = $2, bioma = $3, endereco = $4, orgao_gestor = $5, area_total = $6
+        WHERE cnuc = $7
+        RETURNING *
+    """
+    try:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                sql,
+                payload.nome,
+                payload.data_criacao,
+                payload.bioma,
+                payload.endereco,
+                payload.orgao_gestor,
+                payload.area_total,
+                cnuc,
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao atualizar unidade: {str(e)}",
+        )
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unidade de conservação com cnuc '{cnuc}' não encontrada.",
+        )
+    return dict(row)
