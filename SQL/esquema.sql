@@ -1,19 +1,27 @@
 CREATE TABLE unidade_conservacao (
-    cnuc            char(12) NOT NULL,
-    nome            varchar(100),
-    data_criacao    date DEFAULT CURRENT_DATE,
-    bioma           varchar(30) ,
-    endereco        varchar(255),
-    orgao_gestor    varchar(100),
-    area_total      numeric(10, 2) DEFAULT 0.00, 
+    cnuc             char(12) NOT NULL,
+    nome             varchar(100),
+    data_criacao     date DEFAULT CURRENT_DATE,
+    bioma            varchar(30),
+    rodovia          char(6),
+    km               smallint,
+    cidade           varchar(50),
+    uf               char(2),
+    descricao_acesso varchar(255),
+    orgao_gestor     varchar(100),
+    area_total       numeric(10, 2) DEFAULT 0.00, 
     -- TODO: criar um trigger para fazer o calculo automático
 
     CONSTRAINT pk_unidade_conservacao 
         PRIMARY KEY (cnuc),
 
     CONSTRAINT ck_area_total 
-        CHECK (area_total >= 0)
+        CHECK (area_total >= 0),
+
+    CONSTRAINT ck_km_valido
+        CHECK (0 <= km < 1000)
 );
+
 
 CREATE TABLE zona (
     unidade_conservacao char(12) NOT NULL,
@@ -34,7 +42,6 @@ CREATE TABLE zona (
 
     CONSTRAINT ck_zona_area 
         CHECK (area >= 0)
-
 );
 
 CREATE TABLE comunidade_tradicional (
