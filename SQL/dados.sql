@@ -1,23 +1,47 @@
 -- ==========================
 -- Unidades de Conservação
 -- ==========================
-INSERT INTO unidade_conservacao VALUES
-('000000000001', 'Parque Nacional do Iguaçu', '1939-01-10', 'Mata Atlântica', 'BR 469, Km 18, Foz do Iguaçu - PR', 'ICMBio', 185262.50),
-('000000000002', 'Parque Nacional da Chapada dos Veadeiros', '1961-01-11', 'Cerrado', 'Rodovia GO 239, Km 36, Alto Paraíso de Goiás - GO', 'ICMBio', 240611.00),
-('000000000003', 'Parque Nacional da Serra da Capivara', '1979-06-05', 'Caatinga', 'São Raimundo Nonato - PI', 'ICMBio', 135000.00),
-('000000000004', 'Reserva Extrativista Chico Mendes', '1990-03-12', 'Amazônia', 'Xapuri - AC', 'ICMBio', 970000.00),
-('000000000005', 'Parque Nacional do Pantanal Matogrossense', '1981-11-24', 'Pantanal', 'Corumbá - MS', 'ICMBio', 1350000.00),
-('000000000006', 'Parque Nacional do Caparaó', '1961-09-24', 'Mata Atlântica', 'Dores do Rio Preto - ES', 'ICMBio', 310000.00),
-('000000000007', 'Parque Nacional da Serra dos Órgãos', '1939-11-30', 'Mata Atlântica', 'Teresópolis - RJ', 'ICMBio', 200000.00),
-('000000000008', 'Parque Nacional de Jericoacoara', '1984-06-02', 'Caatinga', 'Jericoacoara - CE', 'ICMBio', 90000.00),
-('000000000009', 'Parque Nacional do Itatiaia', '1937-06-14', 'Mata Atlântica', 'Itatiaia - RJ', 'ICMBio', 300000.00),
-('000000000010', 'Parque Nacional da Serra da Bocaina', '1971-04-13', 'Mata Atlântica', 'Cunha - SP', 'ICMBio', 150000.00),
-('000000000011', 'Parque Nacional do Pampa', '2020-04-02', 'Pampa', 'Alegrete - RS', 'ICMBio', 84000.00),
-('000000000012', 'Parque Nacional Marinho de Fernando de Noronha', '1988-09-14', 'Marinho-Costeiro', 'Fernando de Noronha - PE', 'ICMBio', 11270.00);
+INSERT INTO unidade_conservacao ( cnuc, nome, data_criacao, bioma, rodovia, km, cidade, uf, descricao_acesso, orgao_gestor, area_total) VALUES
+(
+  '000000000001', 'Parque Nacional do Iguaçu', '1939-01-10', 'Mata Atlântica', 'BR 469', 18, 'Foz do Iguaçu', 'PR', 'BR 469, Km 18, Foz do Iguaçu - PR', 'ICMBio', 185262.50
+),
+(
+  '000000000002', 'Parque Nacional da Chapada dos Veadeiros', '1961-01-11', 'Cerrado', 'GO 239', 36, 'Alto Paraíso de Goiás', 'GO', 'Rodovia GO 239, Km 36, Alto Paraíso de Goiás - GO', 'ICMBio', 240611.00
+),
+(
+  '000000000003', 'Parque Nacional da Serra da Capivara', '1979-06-05', 'Caatinga', NULL, 0, 'São Raimundo Nonato', 'PI', 'São Raimundo Nonato - PI', 'ICMBio', 135000.00
+),
+(
+  '000000000004', 'Reserva Extrativista Chico Mendes', '1990-03-12', 'Amazônia', NULL, 0, 'Xapuri', 'AC', 'Xapuri - AC', 'ICMBio', 970000.00
+),
+(
+  '000000000005', 'Parque Nacional do Pantanal Matogrossense', '1981-11-24', 'Pantanal', NULL, 0, 'Corumbá', 'MS', 'Corumbá - MS', 'ICMBio', 1350000.00
+),
+(
+  '000000000006', 'Parque Nacional do Caparaó', '1961-09-24', 'Mata Atlântica', NULL, 0, 'Dores do Rio Preto', 'ES', 'Dores do Rio Preto - ES', 'ICMBio', 310000.00
+),
+(
+  '000000000007', 'Parque Nacional da Serra dos Órgãos', '1939-11-30', 'Mata Atlântica', NULL, 0, 'Teresópolis', 'RJ', 'Teresópolis - RJ', 'ICMBio', 200000.00
+),
+(
+  '000000000008', 'Parque Nacional de Jericoacoara', '1984-06-02', 'Caatinga', NULL, 0, 'Jericoacoara', 'CE', 'Jericoacoara - CE', 'ICMBio', 90000.00
+),
+(
+  '000000000009', 'Parque Nacional do Itatiaia', '1937-06-14', 'Mata Atlântica', NULL, 0, 'Itatiaia', 'RJ', 'Itatiaia - RJ', 'ICMBio', 300000.00
+),
+(
+  '000000000010', 'Parque Nacional da Serra da Bocaina', '1971-04-13', 'Mata Atlântica', NULL, 0, 'Cunha', 'SP', 'Cunha - SP', 'ICMBio', 150000.00
+),
+(
+  '000000000011', 'Parque Nacional do Pampa', '2020-04-02', 'Pampa', NULL, 0, 'Alegrete', 'RS', 'Alegrete - RS', 'ICMBio', 84000.00
+),
+(
+  '000000000012', 'Parque Nacional Marinho de Fernando de Noronha', '1988-09-14', 'Marinho-Costeiro', NULL, 0, 'Fernando de Noronha', 'PE', 'Fernando de Noronha - PE', 'ICMBio', 11270.00
+);
 
--- UC com data_criacao (DEFAULT CURRENT_DATE) e area_total (DEFAULT 0.00) omitidos intencionalmente
-INSERT INTO unidade_conservacao (cnuc, nome, bioma, endereco, orgao_gestor)
-VALUES ('000000000013', 'Floresta Nacional de Brasília', 'Cerrado', 'Brasília - DF', 'ICMBio');
+INSERT INTO unidade_conservacao ( cnuc, nome, bioma, rodovia, km, cidade, uf, descricao_acesso, orgao_gestor) VALUES (
+  '000000000013', 'Floresta Nacional de Brasília', 'Cerrado', NULL, 0, 'Brasília', 'DF', 'Brasília - DF', 'ICMBio'
+);
 
 -- ==========================
 -- Zonas
