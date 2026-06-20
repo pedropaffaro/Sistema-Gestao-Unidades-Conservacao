@@ -18,8 +18,8 @@ CREATE TABLE unidade_conservacao (
     CONSTRAINT ck_area_total 
         CHECK (area_total >= 0),
 
-    CONSTRAINT ck_km_valido
-        CHECK (0 <= km < 1000)
+    CONSTRAINT ck_km_valido 
+        CHECK (km >= 0 AND km < 1000)
 );
 
 
