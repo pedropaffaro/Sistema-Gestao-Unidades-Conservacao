@@ -9,6 +9,27 @@ use ratatui::widgets::TableState;
 
 use crate::api::{self, CreateUnidade, FilterParams, Unidade};
 
+/// Valida (no cliente) que o CNUC contém apenas dígitos `0-9`.
+/// Retorna a mensagem de erro em português quando inválido.
+fn check_cnuc_digits(cnuc: &str) -> Result<(), String> {
+    if cnuc.chars().all(|c| c.is_ascii_digit()) {
+        Ok(())
+    } else {
+        Err("Erro: CNUC deve conter apenas números (0-9).".into())
+    }
+}
+
+/// Valida (no cliente) que a UF tem exatamente 2 letras.
+/// `None`/vazio é aceito, pois o campo é opcional.
+fn check_uf(uf: &Option<String>) -> Result<(), String> {
+    match uf {
+        Some(v) if v.chars().count() != 2 || !v.chars().all(|c| c.is_alphabetic()) => {
+            Err("Erro: UF deve conter exatamente 2 letras (ex: SP).".into())
+        }
+        _ => Ok(()),
+    }
+}
+
 /// Tela atualmente em foco; decide renderização e roteamento de teclas.
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Screen {
@@ -381,6 +402,14 @@ impl App {
             self.status = "Erro: CNUC deve ter exatamente 12 caracteres!".into();
             return;
         }
+        if let Err(e) = check_cnuc_digits(&cnuc) {
+            self.status = e;
+            return;
+        }
+        if let Err(e) = check_uf(&self.create.val(7)) {
+            self.status = e;
+            return;
+        }
 
         let km = match self.create.val(5) {
             None => None,
@@ -433,6 +462,11 @@ impl App {
 
     /// Monta o payload e chama PUT `/unidades/{cnuc}` (CNUC imutável).
     fn submit_edit(&mut self) {
+        if let Err(e) = check_uf(&self.create.val(7)) {
+            self.status = e;
+            return;
+        }
+
         let km = match self.create.val(5) {
             None => None,
             Some(s) => match s.parse::<i32>() {
@@ -500,6 +534,17 @@ impl App {
 
     /// Coleta os campos de filtro e dispara a consulta via [`Self::fetch_units`].
     fn submit_filter(&mut self) {
+        if let Some(cnuc) = self.filter.val(0) {
+            if let Err(e) = check_cnuc_digits(&cnuc) {
+                self.status = e;
+                return;
+            }
+        }
+        if let Err(e) = check_uf(&self.filter.val(7)) {
+            self.status = e;
+            return;
+        }
+
         self.filters = FilterParams {
             cnuc: self.filter.val(0),
             nome: self.filter.val(1),
