@@ -13,6 +13,7 @@ router = APIRouter(prefix="/unidades", tags=["Unidades de Conservação"])
 def _is_null_search(value: Optional[str]) -> bool:
     return value is not None and value.strip().lower() == "null"
 
+
 # Acumula uma condição WHERE parametrizada ($i) e retorna o próximo índice.
 # exact=True compara por igualdade; caso contrário usa ILIKE (busca parcial).
 def _add_condition(
@@ -42,10 +43,10 @@ def _add_condition(
 # Mapeia o nome da constraint do PostgreSQL para uma mensagem amigável.
 _CONSTRAINT_MSGS: dict[str, str] = {
     "pk_unidade_conservacao": "Já existe uma unidade com este CNUC.",
-    "ck_cnuc_formato":        "CNUC deve conter exatamente 12 dígitos numéricos.",
-    "ck_area_total":          "Área total deve ser maior ou igual a zero.",
-    "ck_km_valido":           "KM deve ser um valor entre 0 e 9999.",
-    "ck_uf":                  "UF inválida. Use uma sigla de estado brasileiro (ex: SP).",
+    "ck_cnuc_formato": "CNUC deve conter exatamente 12 dígitos numéricos.",
+    "ck_area_total": "Área total deve ser maior ou igual a zero.",
+    "ck_km_valido": "KM deve ser um valor entre 0 e 9999.",
+    "ck_uf": "UF inválida. Use uma sigla de estado brasileiro (ex: SP).",
 }
 
 
@@ -55,13 +56,21 @@ def _db_error_to_http(e: Exception, cnuc: str = "") -> HTTPException:
         constraint = getattr(e, "constraint_name", "")
         detail = _CONSTRAINT_MSGS.get(constraint)
         if detail is None:
-            detail = f"Já existe uma unidade com CNUC '{cnuc}'." if cnuc else "Registro duplicado."
+            detail = (
+                f"Já existe uma unidade com CNUC '{cnuc}'."
+                if cnuc
+                else "Registro duplicado."
+            )
         return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
 
     if isinstance(e, asyncpg.CheckViolationError):
         constraint = getattr(e, "constraint_name", "")
-        detail = _CONSTRAINT_MSGS.get(constraint, f"Valor inválido: restrição '{constraint}' violada.")
-        return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
+        detail = _CONSTRAINT_MSGS.get(
+            constraint, f"Valor inválido: restrição '{constraint}' violada."
+        )
+        return HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail
+        )
 
     if isinstance(e, asyncpg.NotNullViolationError):
         col = getattr(e, "column_name", "desconhecido")
@@ -82,7 +91,9 @@ def _db_error_to_http(e: Exception, cnuc: str = "") -> HTTPException:
             detail = "Não é possível excluir: existem registros vinculados a esta unidade em outras tabelas."
         else:
             detail = "Referência inválida: registro relacionado não encontrado."
-        return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
+        return HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail
+        )
 
     if isinstance(e, asyncpg.DataError):
         return HTTPException(
@@ -112,8 +123,9 @@ async def criar_unidade(
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
     """
-    try:
-        async with pool.acquire() as conn:
+    async with pool.acquire() as conn:
+        await conn.execute("BEGIN")
+        try:
             row = await conn.fetchrow(
                 sql,
                 payload.cnuc,
@@ -128,8 +140,10 @@ async def criar_unidade(
                 payload.orgao_gestor,
                 payload.area_total,
             )
-    except asyncpg.PostgresError as e:
-        raise _db_error_to_http(e, cnuc=payload.cnuc)
+            await conn.execute("COMMIT")
+        except asyncpg.PostgresError as e:
+            await conn.execute("ROLLBACK")
+            raise _db_error_to_http(e, cnuc=payload.cnuc)
 
     return dict(row)
 
@@ -142,14 +156,31 @@ async def criar_unidade(
 )
 async def listar_unidades(
     cnuc: Optional[str] = Query(None, description="Busca exata pelo CNUC"),
-    nome: Optional[str] = Query(None, description="Busca parcial no nome (use 'null' para campos vazios)"),
-    bioma: Optional[str] = Query(None, description="Busca parcial no bioma (use 'null' para campos vazios)"),
-    orgao_gestor: Optional[str] = Query(None, description="Busca parcial no órgão gestor (use 'null' para campos vazios)"),
-    data_criacao: Optional[str] = Query(None, description="Data exata AAAA-MM-DD (use 'null' para campos vazios)"),
-    rodovia: Optional[str] = Query(None, description="Busca parcial na rodovia (use 'null' para campos vazios)"),
-    cidade: Optional[str] = Query(None, description="Busca parcial na cidade (use 'null' para campos vazios)"),
-    uf: Optional[str] = Query(None, description="Busca exata no UF (use 'null' para campos vazios)"),
-    km: Optional[str] = Query(None, description="KM exato (use 'null' para campos vazios)"),
+    nome: Optional[str] = Query(
+        None, description="Busca parcial no nome (use 'null' para campos vazios)"
+    ),
+    bioma: Optional[str] = Query(
+        None, description="Busca parcial no bioma (use 'null' para campos vazios)"
+    ),
+    orgao_gestor: Optional[str] = Query(
+        None,
+        description="Busca parcial no órgão gestor (use 'null' para campos vazios)",
+    ),
+    data_criacao: Optional[str] = Query(
+        None, description="Data exata AAAA-MM-DD (use 'null' para campos vazios)"
+    ),
+    rodovia: Optional[str] = Query(
+        None, description="Busca parcial na rodovia (use 'null' para campos vazios)"
+    ),
+    cidade: Optional[str] = Query(
+        None, description="Busca parcial na cidade (use 'null' para campos vazios)"
+    ),
+    uf: Optional[str] = Query(
+        None, description="Busca exata no UF (use 'null' para campos vazios)"
+    ),
+    km: Optional[str] = Query(
+        None, description="KM exato (use 'null' para campos vazios)"
+    ),
     pool: asyncpg.Pool = Depends(get_env_pool),
 ):
     conditions = []
@@ -223,6 +254,7 @@ async def listar_unidades(
 
     return [dict(r) for r in rows]
 
+
 @router.delete(
     "/{cnuc}",
     response_model=UnidadeResponse,
@@ -234,17 +266,21 @@ async def deletar_unidade(
     pool: asyncpg.Pool = Depends(get_env_pool),
 ):
     sql = "DELETE FROM unidade_conservacao WHERE cnuc = $1 RETURNING *"
-    try:
-        async with pool.acquire() as conn:
+    async with pool.acquire() as conn:
+        await conn.execute("BEGIN")
+        try:
             row = await conn.fetchrow(sql, cnuc)
-    except asyncpg.PostgresError as e:
-        raise _db_error_to_http(e, cnuc=cnuc)
+            await conn.execute("COMMIT")
+        except asyncpg.PostgresError as e:
+            await conn.execute("ROLLBACK")
+            raise _db_error_to_http(e, cnuc=cnuc)
     if not row:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Unidade de conservação com cnuc '{cnuc}' não encontrada.",
         )
     return dict(row)
+
 
 @router.put(
     "/{cnuc}",
@@ -266,8 +302,9 @@ async def atualizar_unidade(
         WHERE cnuc = $12
         RETURNING *
     """
-    try:
-        async with pool.acquire() as conn:
+    async with pool.acquire() as conn:
+        await conn.execute("BEGIN")
+        try:
             row = await conn.fetchrow(
                 sql,
                 payload.cnuc,
@@ -283,8 +320,10 @@ async def atualizar_unidade(
                 payload.area_total,
                 cnuc,
             )
-    except asyncpg.PostgresError as e:
-        raise _db_error_to_http(e, cnuc=cnuc)
+            await conn.execute("COMMIT")
+        except asyncpg.PostgresError as e:
+            await conn.execute("ROLLBACK")
+            raise _db_error_to_http(e, cnuc=cnuc)
     if not row:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
