@@ -1,4 +1,4 @@
-//! Estado e lógica de interação da TUI (modelo no padrão "the elm/MVU").
+//! Estado e lógica de interação da TUI.
 //!
 //! [`App`] guarda todo o estado; [`App::handle_key`] roteia as teclas para o
 //! handler da tela atual ([`Screen`]); as ações que tocam a rede delegam ao

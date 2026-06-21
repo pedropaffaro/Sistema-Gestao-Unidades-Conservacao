@@ -209,7 +209,6 @@ fn render_form(
         let is_focused = i == focused;
         let is_cnuc = i == 0 && app.screen != Screen::List;
 
-        // For CNUC field: dynamic label with character count and color based on length
         let cnuc_label_buf;
         let effective_label = if is_cnuc {
             let len = field.value.chars().count();
@@ -235,8 +234,11 @@ fn render_form(
             Style::new().fg(Color::Gray)
         };
 
-        // Render label (right-padded to max_label_w + ": ")
-        let label_text = format!("{:<width$}: ", effective_label, width = max_label_w as usize);
+        let label_text = format!(
+            "{:<width$}: ",
+            effective_label,
+            width = max_label_w as usize
+        );
         let label_rect = Rect {
             x: inner.x + 2,
             y: row_y,
@@ -245,7 +247,6 @@ fn render_form(
         };
         frame.render_widget(Paragraph::new(label_text).style(label_style), label_rect);
 
-        // Render input box
         let input_w = inner
             .width
             .saturating_sub(input_start_x - inner.x)
@@ -277,10 +278,11 @@ fn render_form(
         }
     }
 
-    // Key hint at the bottom of the form
     let hint = match app.screen {
         Screen::Create => "[Tab] Próximo  [Shift+Tab] Anterior  [Enter] Criar  [Esc] Cancelar",
-        Screen::Edit => "[Tab] Próximo  [Shift+Tab] Anterior  [Enter] Salvar  [Esc] Cancelar  │  CNUC bloqueado",
+        Screen::Edit => {
+            "[Tab] Próximo  [Shift+Tab] Anterior  [Enter] Salvar  [Esc] Cancelar  │  CNUC bloqueado"
+        }
         Screen::Filter => "[Tab] Próximo  [Shift+Tab] Anterior  [Enter] Buscar  [Esc] Cancelar",
         _ => "",
     };
@@ -303,7 +305,12 @@ fn render_form(
 fn render_status(frame: &mut Frame, app: &App, area: Rect) {
     // On create/edit form: always show CNUC counter on the left with color
     if app.screen == Screen::Create || app.screen == Screen::Edit {
-        let len = app.create.fields.first().map(|f| f.value.chars().count()).unwrap_or(0);
+        let len = app
+            .create
+            .fields
+            .first()
+            .map(|f| f.value.chars().count())
+            .unwrap_or(0);
         let (cnuc_style, check) = if len == 12 {
             (Style::new().fg(GREEN).bold(), " ✓")
         } else {
@@ -314,7 +321,12 @@ fn render_status(frame: &mut Frame, app: &App, area: Rect) {
 
         frame.render_widget(
             Paragraph::new(counter).style(cnuc_style),
-            Rect { x: area.x, y: area.y, width: counter_w.min(area.width), height: 1 },
+            Rect {
+                x: area.x,
+                y: area.y,
+                width: counter_w.min(area.width),
+                height: 1,
+            },
         );
 
         if counter_w < area.width {
@@ -381,17 +393,18 @@ fn render_delete_confirm(frame: &mut Frame, app: &App, area: Rect) {
         Line::from(""),
         Line::from(vec![
             Span::styled("  Unidade: ", Style::new().fg(DARK_GRAY)),
-            Span::styled(app.delete_cnuc.as_str(), Style::new().fg(Color::White).bold()),
+            Span::styled(
+                app.delete_cnuc.as_str(),
+                Style::new().fg(Color::White).bold(),
+            ),
             Span::raw("  —  "),
             Span::raw(nome),
         ]),
         Line::from(""),
-        Line::from(vec![
-            Span::styled(
-                "  Esta operação é irreversível. Confirmar exclusão?",
-                Style::new().fg(YELLOW),
-            ),
-        ]),
+        Line::from(vec![Span::styled(
+            "  Esta operação é irreversível. Confirmar exclusão?",
+            Style::new().fg(YELLOW),
+        )]),
         Line::from(""),
         Line::from(vec![
             Span::styled("  [s] Sim, excluir", Style::new().fg(RED).bold()),
