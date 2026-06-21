@@ -103,25 +103,3 @@ WHERE NOT EXISTS (                                                  -- não pode
     WHERE PE.pesquisa = P.titulo
 );     
 
-
---- ============================================================================
--- Consulta 6
--- Por comunidade tradicional: número de ocorrências agrupadas por tipo e nível
--- de gravidade, retornando a quantidade de ocorrências e a média de área
--- afetada. A ligação é feita pela zona em comum (unidade_conservacao, nro_zona)
--- entre a comunidade e as ocorrências.
--- ============================================================================
--- SELECT CT.unidade_conservacao,                                      -- UC da comunidade tradicional
---        CT.nro_zona,                                                 -- zona da comunidade
---        CT.nome           AS comunidade,                             -- nome da comunidade tradicional
---        O.tipo_ocorrencia,                                           -- tipo da ocorrência
---        O.nivel_gravidade,                                           -- nível de gravidade da ocorrência
---        COUNT(*)              AS qte_ocorrencias,                     -- quantidade de ocorrências no grupo
---        AVG(O.area_afetada)   AS media_area_afetada                  -- média de área afetada no grupo
--- FROM comunidade_tradicional CT
--- JOIN ocorrencia O
---   ON O.unidade_conservacao = CT.unidade_conservacao                 -- mesma unidade de conservação...
---  AND O.nro_zona            = CT.nro_zona                            -- ...e mesma zona da comunidade
--- GROUP BY CT.unidade_conservacao, CT.nro_zona, CT.nome,              -- agrupa por comunidade...
---          O.tipo_ocorrencia, O.nivel_gravidade;                      -- ...tipo e nível de gravidade
--- diferença vazia => estuda todas as CR
