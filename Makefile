@@ -1,4 +1,5 @@
 PROJECT=trabalho_bd
+FILE=SQL/consultas.sql
 
 .PHONY: help up build down restart logs logs-front bash-front logs-backoffice bash-backoffice logs-backend bash-backend psql logs-db ps
 
@@ -47,3 +48,7 @@ logs-db: ## Mostra os logs apenas do banco de dados
 
 ps: ## Lista o status e as portas de todos os contêineres ativos do projeto
 	docker compose -p $(PROJECT) ps
+
+run:
+	docker compose -p $(PROJECT) exec -T db sh -c 'psql -U $$DB_USER -d $$DB_NAME' < $(FILE)
+
