@@ -49,6 +49,6 @@ logs-db: ## Mostra os logs apenas do banco de dados
 ps: ## Lista o status e as portas de todos os contêineres ativos do projeto
 	docker compose -p $(PROJECT) ps
 
-run:
+run:  ## Roda scripts .sql no banco. O script default é o SQL/consultas.sql
 	docker compose -p $(PROJECT) exec -T db sh -c 'psql -U $$DB_USER -d $$DB_NAME' < $(FILE)
 
