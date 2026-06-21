@@ -5,12 +5,21 @@ from decimal import Decimal
 
 
 class UnidadeCreate(BaseModel):
-    cnuc: str = Field(..., min_length=12, max_length=12, examples=["000123456789"])
+    # Sem min/max_length: a validação é feita no validator abaixo para garantir
+    # mensagem de erro em português (o constraint do Pydantic emitiria em inglês).
+    cnuc: str = Field(..., examples=["000123456789"])
     nome: Optional[str] = Field(
         None, max_length=100, example="Parque Nacional do Iguaçu"
     )
     data_criacao: Optional[date] = Field(None, example="31-12-2026")
     bioma: Optional[str] = Field(None, max_length=30, example="Mata Atlântica")
+
+    @field_validator("cnuc")
+    @classmethod
+    def valida_cnuc(cls, v):
+        if not (v.isdigit() and len(v) == 12):
+            raise ValueError("CNUC deve conter exatamente 12 dígitos numéricos.")
+        return v
 
     @field_validator("data_criacao", mode="before")
     @classmethod
@@ -29,7 +38,17 @@ class UnidadeCreate(BaseModel):
     rodovia: Optional[str] = Field(None, max_length=100, example="BR 469")
     km: Optional[int] = Field(None, ge=0, example=18)
     cidade: Optional[str] = Field(None, max_length=100, example="Foz do Iguaçu")
-    uf: Optional[str] = Field(None, max_length=2, example="PR")
+    # Sem max_length: validado abaixo para emitir mensagem em português.
+    uf: Optional[str] = Field(None, example="PR")
+
+    @field_validator("uf")
+    @classmethod
+    def valida_uf(cls, v):
+        if v is None:
+            return v
+        if len(v) != 2 or not v.isalpha():
+            raise ValueError("UF deve conter exatamente 2 letras (ex: SP).")
+        return v.upper()
     descricao_acesso: Optional[str] = Field(
         None, max_length=255, example="Acesso pela marginal da rodovia"
     )
