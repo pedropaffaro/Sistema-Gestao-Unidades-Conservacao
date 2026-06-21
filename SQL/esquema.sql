@@ -303,7 +303,7 @@ CREATE TABLE pesquisa_pesquisador (
     
     CONSTRAINT fk_pesquisa_pesquisador_pesquisador
         FOREIGN KEY (pesquisador) REFERENCES funcionario (nro_funcional)
-        ON DELETE RESTRICT
+        ON DELETE RESTRICT ON UPDATE CASCADE -- RESTRICT protege o vínculo; ON UPDATE propaga troca de nro_funcional
 
     -- TODO: trigger para verificar que o funcionário é do tipo 'PESQUISADOR'
 );
@@ -379,11 +379,11 @@ CREATE TABLE observacao (
 
     CONSTRAINT fk_observacao_biologo
         FOREIGN KEY (biologo) REFERENCES funcionario (nro_funcional)
-        ON DELETE RESTRICT,
-    
+        ON DELETE RESTRICT ON UPDATE CASCADE, -- RESTRICT protege o histórico; ON UPDATE propaga troca de nro_funcional
+
     CONSTRAINT fk_observacao_ser_vivo
         FOREIGN KEY (ser_vivo) REFERENCES ser_vivo (chip)
-        ON DELETE CASCADE,
+        ON DELETE CASCADE ON UPDATE CASCADE,
 
     CONSTRAINT fk_observacao_zona
         FOREIGN KEY (unidade_conservacao, nro_zona) REFERENCES zona (unidade_conservacao, nro_zona)
@@ -421,7 +421,7 @@ CREATE TABLE ocorrencia (
     
     CONSTRAINT fk_ocorrencia_fiscal
         FOREIGN KEY (fiscal) REFERENCES funcionario (nro_funcional)
-        ON DELETE RESTRICT,
+        ON DELETE RESTRICT ON UPDATE CASCADE, -- RESTRICT protege o histórico; ON UPDATE propaga troca de nro_funcional
 
     CONSTRAINT ck_ocorrencia_tipo
         CHECK (UPPER(tipo_ocorrencia) IN ('DESMATAMENTO', 'GARIMPO', 'CACA', 'INCENDIO CRIMINOSO', 'INCENDIO NATURAL', 'DESLIZAMENTO DE ENCOSTA', 'OCUPACAO IRREGULAR',  'TRAFICO BIOLOGICO', 'INVASAO DE ZONA')),
