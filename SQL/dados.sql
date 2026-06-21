@@ -519,3 +519,46 @@ INSERT INTO pesquisa_pesquisador (pesquisa, pesquisador) VALUES
 INSERT INTO pesquisa_especie (pesquisa, especie) VALUES
 ('Proteção do Peixe-boi Marinho', 'Trichechus manatus');
 
+
+-- ---------------------------------------------------------------------------
+-- Casos de teste adicionais da Consulta 5 (divisão relacional).
+-- "Todas as CR" é global: as espécies CR no dataset são
+--   Trichechus manatus e Araucaria angustifolia.
+-- ---------------------------------------------------------------------------
+
+-- Caso POSITIVO: cobre EXATAMENTE as 2 espécies CR. A diferença
+-- (CR EXCEPT estudadas) fica vazia, então DEVE aparecer na Consulta 5.
+INSERT INTO pesquisa (titulo, objetivo)
+VALUES ('DICIONARIO DE RISCOS - Uma pesquisa sobre todas as especies em extinção no Brasil',
+        'Estuda as duas espécies CR.');
+
+INSERT INTO pesquisa_especie (pesquisa, especie) VALUES
+('DICIONARIO DE RISCOS - Uma pesquisa sobre todas as especies em extinção no Brasil', 'Trichechus manatus'),
+('DICIONARIO DE RISCOS - Uma pesquisa sobre todas as especies em extinção no Brasil', 'Araucaria angustifolia');
+
+-- Borda (cobre parte): estuda só 1 das 2 CR (o peixe-boi). A diferença ainda
+-- contém Araucaria angustifolia, então NÃO deve aparecer.
+INSERT INTO pesquisa (titulo, objetivo)
+VALUES ('Peixes e Bois, qual a sua intersecção?',
+        'Estuda apenas uma das CR.');
+
+INSERT INTO pesquisa_especie (pesquisa, especie) VALUES
+('Peixes e Bois, qual a sua intersecção?', 'Trichechus manatus');
+
+-- Borda (superconjunto): cobre as 2 CR + 1 espécie não-CR (Panthera onca, NT).
+-- A espécie extra é irrelevante para a divisão, então DEVE aparecer.
+INSERT INTO pesquisa (titulo, objetivo)
+VALUES ('Revisão sisetmática de todas as espécies que eu consegui lembrar',
+        'Estuda as duas CR e uma espécie não-CR.');
+
+INSERT INTO pesquisa_especie (pesquisa, especie) VALUES
+('Revisão sisetmática de todas as espécies que eu consegui lembrar', 'Trichechus manatus'),
+('Revisão sisetmática de todas as espécies que eu consegui lembrar', 'Araucaria angustifolia'),
+('Revisão sisetmática de todas as espécies que eu consegui lembrar', 'Panthera onca');
+
+-- Borda (conjunto vazio): não estuda nenhuma espécie. Como existem CR no banco,
+-- a diferença é não-vazia, então NÃO deve aparecer.
+INSERT INTO pesquisa (titulo, objetivo)
+VALUES ('Espécies: precisamos delas?',
+        'Não estuda nenhuma espécie.');
+
