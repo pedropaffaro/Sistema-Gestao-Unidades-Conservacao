@@ -171,7 +171,7 @@ async def listar_unidades(
         description="Busca parcial no órgão gestor (use 'null' para campos vazios)",
     ),
     data_criacao: Optional[str] = Query(
-        None, description="Data exata AAAA-MM-DD (use 'null' para campos vazios)"
+        None, description="Data exata DD-MM-AAAA ou AAAA-MM-DD (use 'null' para campos vazios)"
     ),
     rodovia: Optional[str] = Query(
         None, description="Busca parcial na rodovia (use 'null' para campos vazios)"

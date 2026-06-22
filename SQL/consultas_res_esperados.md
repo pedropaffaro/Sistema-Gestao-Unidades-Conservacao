@@ -17,7 +17,7 @@ JOIN (
 GROUP BY F.unidade_conservacao;
 ```
 
-### Resultado esperado
+### Resultado esperado (desconsiderando ordenação)
 
 | unidade_conservacao | nro_funcionarios_multicategoricos |
 |---|---|
@@ -44,7 +44,7 @@ WHERE FC.categoria = 'BIOLOGO'
   );
 ```
 
-### Resultado esperado
+### Resultado esperado (desconsiderando ordenação)
 
 | funcionario | nome |
 |---|---|
@@ -74,7 +74,7 @@ WHERE V.guia IS NOT NULL
   );
 ```
 
-### Resultado esperado
+### Resultado esperado (desconsiderando ordenação)
 
 | cod_visita | unidade_conservacao | nro_zona | nro_visita | data_hora | tipo | nro_visitantes | guia |
 |---|---|---|---|---|---|---|---|
@@ -98,7 +98,7 @@ WHERE NOT EXISTS (
 GROUP BY E.nome_cientifico, E.status_conservacao;
 ```
 
-### Resultado esperado
+### Resultado esperado (desconsiderando ordenação)
 
 | nome_cientifico | status_conservacao | qte_pesquisas |
 |---|---|---|

@@ -191,6 +191,8 @@ CREATE TABLE funcionario_categoria (
     CONSTRAINT fk_funcionario_categoria_funcionario
         FOREIGN KEY (funcionario) REFERENCES funcionario (nro_funcional)
         ON DELETE CASCADE ON UPDATE CASCADE
+
+    -- TODO: Aqui teria que ter um trigger para que a categoria do funcionário sempre estivesse maiúsculo, a fim de otimizar a busca pelo índice e não precisar usar UPPER() nas consultas.
 );
 
 -- ============================================================================

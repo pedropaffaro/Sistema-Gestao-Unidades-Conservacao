@@ -11,7 +11,6 @@ PostgreSQL, usando **asyncpg** como driver.
 | `database.py` | Cria e guarda o pool de conexões asyncpg; expõe `get_env_pool` (injeção de dependência). |
 | `schemas.py` | Modelos Pydantic (`UnidadeCreate`/`UnidadeResponse`): validação de entrada/saída e formato de data. |
 | `routers/unidades.py` | Endpoints `/unidades` (POST/GET/PUT/DELETE) e tradução de erros do banco para HTTP. |
-| `handlers.py` | Vazio (reservado). |
 
 ## Como o asyncpg é usado
 
