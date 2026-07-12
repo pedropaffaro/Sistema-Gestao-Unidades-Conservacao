@@ -2,7 +2,6 @@ services:
   db:
     image: postgres:15
     container_name: uc_postgres_db
-    restart: always
     env_file:
       - ./backend/.env
     environment:
@@ -33,3 +32,4 @@ services:
 
 volumes:
   postgres_data:
+
